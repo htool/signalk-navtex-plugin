@@ -1,0 +1,20 @@
+{
+  "description": "NavTex message reader and display",
+  "keywords": [
+    "signalk-node-server-plugin",
+    "signalk-webapp"
+  ],
+  "license": "ISC",
+  "author": {
+    "name": "Hans Tool"
+  },
+  "main": "index.js",
+  "name": "signalk-navtex-plugin",
+  "readme": "ERROR: No README data found!",
+  "version": "0.0.1",
+  "dependencies": {
+    "express": "^4.17.2",
+    "express-ws": "^5.0.2",
+    "lodash": "^4.17.21"
+  }
+}
