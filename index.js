@@ -1,17 +1,16 @@
 /*
+ Interesting API https://hub.arcgis.com/datasets/nga::navtex-sites/api
 */
 
 const util = require("util")
 const express = require("express")
 const _ = require("lodash")
-const fs = require("fs")
 const path = require("path")
 
 // var router = express()
 
 var plugin = {}
 plugin.id = "signalk-navtex-plugin"
-
 
 module.exports = function(app, options) {
   "use strict"
@@ -41,31 +40,42 @@ module.exports = function(app, options) {
       title:
       "A Signal K (node) plugin to read and display NavTex messages",
       description: "Description here",
-      required: ["messagesFilename"],
 
-      properties: {
-        messagesFilename: {
-          type: "string",
-          title: "File for storing NavTex messsages",
-          default: "messages.json"
-        }
       }
     },
 
     start: function(options) {
-      app.debug('started plugin')
+      app.debug('starting plugin')
+      let localSubscription = {
+        context: '*', // Get data for all contexts
+        subscribe: [{
+          path: 'resources.navtex.*', // Get all paths
+          period: 5000 // Every 5000ms
+        }]
+      };
 
-      const messagesFile = path.join(app.getDataDirPath(), options.messagesFilename)
-      app.debug("Filename is " + messagesFile)
-      app.debug("started")
+      app.subscriptionmanager.subscribe(
+        localSubscription,
+        unsubscribes,
+        subscriptionError => {
+          app.error('Error:' + subscriptionError);
+        },
+        delta => {
+          delta.updates.forEach(u => {
+            app.debug(u);
+          });
+        }
+      );
     },
 
     registerWithRouter: function(router) {
+      // Will appear here; plugins/signalk-navtex-plugin/
       app.debug("registerWithRouter")
 
       router.get("/messages", (req, res) => {
         res.contentType("application/json")
         var response = "Reading from " + messagesFile
+
         console.log(response)
         res.send(response)
       })
@@ -73,6 +83,12 @@ module.exports = function(app, options) {
       router.get("/back", (req, res) =>{
         app.debug("back")
         res.redirect('back')
+      })
+
+      router.ws('/echo', function(ws, req) {
+        ws.on('message', function(msg) {
+          ws.send(msg);
+        });
       })
 
     },
