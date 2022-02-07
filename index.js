@@ -40,8 +40,6 @@ module.exports = function(app, options) {
       title:
       "A Signal K (node) plugin to read and display NavTex messages",
       description: "Description here",
-
-      }
     },
 
     start: function(options) {
@@ -49,7 +47,7 @@ module.exports = function(app, options) {
       let localSubscription = {
         context: '*', // Get data for all contexts
         subscribe: [{
-          path: 'resources.navtex.*', // Get all paths
+          path: 'resources.navtex.*', // Get navtex paths
           period: 5000 // Every 5000ms
         }]
       };
