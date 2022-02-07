@@ -88,7 +88,7 @@ module.exports = function(app, options) {
     stop: function() {
       app.debug("Stopping")
       unsubscribes.forEach(f => f())
-      keyPaths.length = keyPaths.length - 1
+      // keyPaths.length = keyPaths.length - 1
 
       clearInterval(pushInterval)
 
