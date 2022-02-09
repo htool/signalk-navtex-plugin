@@ -8,13 +8,19 @@
   "author": {
     "name": "Hans Tool"
   },
-  "main": "index.js",
+  "main": "plugin/index.js",
   "name": "signalk-navtex-plugin",
   "readme": "ERROR: No README data found!",
   "version": "0.0.1",
   "dependencies": {
+    "dateformat": "^5.0.2",
+    "deep-cleaner": "^1.2.1",
     "express": "^4.17.2",
     "express-ws": "^5.0.2",
-    "lodash": "^4.17.21"
+    "jquery": "^3.6.0",
+    "lodash": "^4.17.21",
+    "node-datetime": "^2.1.2",
+    "querystring": "^0.2.1",
+    "serialport": "^9.2.8"
   }
 }

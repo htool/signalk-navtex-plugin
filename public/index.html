@@ -1,5 +1,137 @@
-<HTML>
-<BODY>
-<H1> Test </H1>
-</BODY>
-</HTML>
+<html>
+<head>
+  <META http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <META http-equiv="Pragma" content="no-cache" />
+  <META http-equiv="Expires" content="0" />
+  <META content="IE=11.0000" http-equiv="X-UA-Compatible">
+  <META charset="utf-8">
+  <META name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <META name="navico-store" content="mfd-insight-store">
+  <title>Signal K NavTex reader</title>
+  <script>document.write('<link rel="stylesheet" href="style.css?ver=' + Math.floor(Math.random() * 1000) + '">');</script>
+  <script type='text/javascript' src='/jquery/dist/jquery.min.js'></script>
+  <script type='text/javascript' src='date.format.js'></script>
+</head>
+<body>
+  <div id="data"/>
+</body>
+
+<script>
+
+let messageTypes = {
+  A: "Navigational warning",
+  B: "Meteorological warning",
+  C: "Ice report",
+  D: "Search and rescue information and pirate warning",
+  E: "Meteorological forecast",
+  F: "Pilot service message",
+  G: "AIS, DECCA message",
+  H: "LORAN message",
+  J: "SATNAV message (GPS, GLONASS)",
+  K: "Other electronic navaid system message",
+  L: "Navigational warning (additional)",
+  V: "Notice to fishermen (US only)",
+  W: "Environmental (US only)",
+  Z: "No message on hand"
+};
+
+var dataDiv = document.getElementById('data');
+
+function connect () {
+	var ws = new WebSocket((window.location.protocol === 'https:' ? 'wss' : 'ws') + "://" + window.location.host + "/signalk/v1/stream?subscribe=none");
+	
+	ws.onopen = function() {
+	  console.log("WebSocket connected");
+	  connected = true;
+	  var subscriptionObject = {
+	    "context": "vessels.self",
+	    "subscribe": [
+	      {
+	        "path": "resources.navtex.*",
+	        "format": "delta"
+	      }
+	    ]
+	  }
+	  var subscriptionMessage = JSON.stringify(subscriptionObject);
+	  ws.send(subscriptionMessage);
+	}
+	
+	ws.onclose = function() {
+	  connected = false;
+	  console.log("WebSocket closed");
+    setTimeout(function() {
+      connect();
+    }, 1000);
+	}
+
+  ws.onmessage = function(event) {
+    addContenttoDom(event.data);
+    // dataDiv.innerHTML += JSON.stringify(JSON.parse(event.data), null, 2);
+  }
+}
+
+connect();
+
+let options = { timeStyle: 'short', hour12: false, dateStyle: 'medium' };
+
+const addContenttoDom = newMessage => {
+  const obj = JSON.parse(newMessage);
+  const message = obj.updates[0].values[0];
+  console.log(message);
+  const stationId = message.path.split('.')[2];
+  const messageType = message.path.split('.')[3];
+  const messageNr = message.path.split('.')[4];
+  const epoch = message.value.epoch;
+  const dateString = new Date(epoch);
+  const datetime = dateString.format("h:MM ddd mmm d");
+
+  const newMessageEl = document.createElement("message");
+  newMessageEl.setAttribute("epoch", epoch);
+  newMessageEl.setAttribute("id","message");
+  newMessageEl.setAttribute("type", "type_" + messageType.toUpperCase());
+  const newHeaderEl = document.createElement("header");
+  newHeaderEl.setAttribute("id","header");
+  newHeaderEl.innerHTML= datetime + "  #" + messageNr + " Station: " + stationId + "<br>" + messageTypes[messageType];
+  newMessageEl.appendChild(newHeaderEl);
+  const newTextEl = document.createElement("text");
+  newTextEl.setAttribute("id","text");
+  for(var i=0; i<message.value.text.length; i++){
+    var line=document.createElement("line");
+    line.setAttribute("id","line");
+    line.innerHTML = message.value.text[i];
+    newTextEl.appendChild(line);
+  }
+  newMessageEl.appendChild(newTextEl);
+  var list = $("message");
+  var j = list.length;
+  if (j == 0) {
+	  document.body.appendChild(newMessageEl);
+  } else {
+    var i = 0;
+    while (message.epoch < $(list[i]).attr('epoch') && i < j) {
+      i++;
+    }
+	  if (i<j) {
+	    document.body.insertBefore(newMessageEl, list[i]);
+    } else {
+	    document.body.appendChild(newMessageEl);
+    }
+  }
+  fadeIn(newMessageEl);
+}
+
+function fadeIn(element) {
+    var op = 0.1;  // initial opacity
+    element.style.display = 'block';
+    var timer = setInterval(function () {
+        if (op >= 1){
+            clearInterval(timer);
+        }
+        element.style.opacity = op;
+        element.style.filter = 'alpha(opacity=' + op * 100 + ")";
+        op += op * 0.02;
+    }, 10);
+}
+
+</script>
+</html>

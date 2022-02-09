@@ -1,0 +1,231 @@
+@font-face {
+    font-family: 'Consolas';
+    font-style: normal;
+    font-weight: 400;
+    src: local('Consolas'), url('Consolas.woff') format('woff');
+}
+
+body {
+  background-color: black;
+  color: white;
+  font-family: 'Consolas', 'Lucida Console', 'Liberation Mono';
+  font-size: normal;
+  margin-left: 2px;
+  margin-right: 2px;
+ }
+
+.dark-mode {
+  color: grey;
+}
+
+#message {
+  display: block;
+  border-radius: 15px;
+  padding: 8px;
+  margin-top: 8px;
+  opacity: 0;
+}
+
+#text {
+  display: block;
+}
+
+#line {
+  display: block;
+}
+
+.dark-mode {
+  color: grey;
+}
+
+#header {
+  margin-bottom: 8px;
+}
+
+/* red */
+[type=type_A],[type=type_L],[type=type_D] {
+  background-color: #660000 ;
+}
+
+/* orange */
+[type=type_B] {
+   background: #4d0f00;
+}
+
+/* green */
+[type=type_E],[type=type_F],[type=type_V] {
+   background: #003300;
+}
+
+/* blue */
+[type=type_C] {
+   background: #AED6F1;
+}
+
+/* yellow */
+[type=type_G],[type=type_H],[type=type_J],[type=type_K],[type=type_W],[type=type_Z] {
+   background: #999900;
+}
+
+.button {
+  display: inline-block;
+  font-family: 'Consolas';
+  background: black;
+  color: grey;
+}
+
+.dropdown-check-list {
+  display: inline-block;
+}
+
+.dropdown-check-list .messagetype {
+  color: grey;
+  position: relative;
+  cursor: pointer;
+  display: inline-block;
+  padding: 5px 50px 5px 10px;
+  border: 1px solid #ccc;
+}
+
+#refreshButton {
+  display: inline-block;
+}
+
+.dropdown-check-list .stationid {
+  color: grey;
+  position: relative;
+  cursor: pointer;
+  display: inline-block;
+  padding: 5px 50px 5px 10px;
+  border: 1px solid #ccc;
+}
+
+.dropdown-check-list .stationid:after {
+  color: grey;
+  position: absolute;
+  content: "";
+  border-left: 2px solid grey;
+  border-top: 2px solid grey;
+  padding: 5px;
+  right: 10px;
+  top: 20%;
+  -moz-transform: rotate(-135deg);
+  -ms-transform: rotate(-135deg);
+  -o-transform: rotate(-135deg);
+  -webkit-transform: rotate(-135deg);
+  transform: rotate(-135deg);
+}
+
+.dropdown-check-list .messagetype:after {
+  color: grey;
+  position: absolute;
+  content: "";
+  border-left: 2px solid grey;
+  border-top: 2px solid grey;
+  padding: 5px;
+  right: 10px;
+  top: 20%;
+  -moz-transform: rotate(-135deg);
+  -ms-transform: rotate(-135deg);
+  -o-transform: rotate(-135deg);
+  -webkit-transform: rotate(-135deg);
+  transform: rotate(-135deg);
+}
+
+.dropdown-check-list .stationid:active:after {
+  color: grey;
+  right: 8px;
+  top: 21%;
+}
+
+.dropdown-check-list .messagetype:active:after {
+  color: grey;
+  right: 8px;
+  top: 21%;
+}
+
+.dropdown-check-list ul.items {
+  padding: 2px;
+  display: none;
+  margin: 0;
+  border: 1px solid #ccc;
+  border-top: none;
+}
+
+.dropdown-check-list ul.items li {
+  list-style: none;
+}
+
+.dropdown-check-list.visible .anchor {
+  color: grey;
+}
+
+.dropdown-check-list.visible .items {
+  display: block;
+}
+
+input[type=checkbox] {
+  position: relative;
+  vertical-align: middle;
+  bottom: 1px;
+}
+
+/* https://css-tricks.com/snippets/css/media-queries-for-standard-devices/ */
+/* iPhone 6s Landscape & Portrait */
+@media only screen
+  and (min-device-width: 375px)
+  and (max-device-width: 667px)
+  and (-webkit-min-device-pixel-ratio: 2) {
+    .dropdown-check-list {
+      font-size: 120%;
+    }
+    .dropdown-check-list .messagetype {
+      font-size: 120%;
+    }
+    .dropdown-check-list .stationid {
+      font-size: 120%;
+    }
+    .dropdown-check-list ul.items {
+      font-size: 120%;
+      padding-left: 40px;
+    }
+    input[type=checkbox] {
+      -webkit-transform: scale(2,2);
+      margin-right: 30px;
+    }
+    #refreshButton {
+      display: none;
+    }
+    #message {
+      font-size: 100%;
+      margin-right: 2px;
+    }
+}
+
+/* iPhone 6s Portrait */
+@media only screen
+  and (min-device-width: 375px)
+  and (max-device-width: 667px)
+  and (-webkit-min-device-pixel-ratio: 2)
+  and (orientation: portrait) {
+    .dropdown-check-list {
+      font-size: 150%;
+    }
+    .dropdown-check-list .messagetype {
+      font-size: 150%;
+    }
+    .dropdown-check-list .stationid {
+      font-size: 150%;
+    }
+    .dropdown-check-list ul.items {
+      font-size: 200%;
+      padding-left: 50px;
+    }
+    #message {
+      font-size: 110%;
+    }
+    input[type=checkbox] {
+      -webkit-transform: scale(3,3);
+      margin-right: 40px;
+    }
+}
