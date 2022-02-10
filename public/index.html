@@ -77,13 +77,12 @@ let options = { timeStyle: 'short', hour12: false, dateStyle: 'medium' };
 const addContenttoDom = newMessage => {
   const obj = JSON.parse(newMessage);
   const message = obj.updates[0].values[0];
-  console.log(message);
   const stationId = message.path.split('.')[2];
   const messageType = message.path.split('.')[3];
   const messageNr = message.path.split('.')[4];
   const epoch = message.value.epoch;
   const dateString = new Date(epoch);
-  const datetime = dateString.format("h:MM ddd mmm d");
+  const datetime = dateString.format("HH:MM ddd mmm d");
 
   const newMessageEl = document.createElement("message");
   newMessageEl.setAttribute("epoch", epoch);
@@ -108,7 +107,7 @@ const addContenttoDom = newMessage => {
 	  document.body.appendChild(newMessageEl);
   } else {
     var i = 0;
-    while (message.epoch < $(list[i]).attr('epoch') && i < j) {
+    while (epoch < $(list[i]).attr('epoch') && i <= j) {
       i++;
     }
 	  if (i<j) {
