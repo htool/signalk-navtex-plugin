@@ -18,6 +18,15 @@ body {
   color: grey;
 }
 
+#divfix {
+  top: 10;
+  right: 10;
+  font-family: Lucida Sans Unicode;
+  font-size: 160%;
+  opacity: 0.4;
+  position: fixed;
+}
+
 #message {
   display: block;
   border-radius: 15px;
@@ -48,12 +57,17 @@ body {
 
 /* orange */
 [type=type_B] {
-   background: #000030;
+   background: #7D3300;
 }
 
 /* green */
-[type=type_E],[type=type_F],[type=type_V] {
+[type=type_F],[type=type_V] {
    background: #003300;
+}
+
+/* light blue */
+[type=type_E] {
+   background: #002255;
 }
 
 /* blue */
@@ -196,7 +210,7 @@ input[type=checkbox] {
       display: none;
     }
     #message {
-      font-size: 100%;
+      font-size: 70%;
       margin-right: 2px;
     }
 }
@@ -221,7 +235,7 @@ input[type=checkbox] {
       padding-left: 50px;
     }
     #message {
-      font-size: 110%;
+      font-size: 90%;
     }
     input[type=checkbox] {
       -webkit-transform: scale(3,3);

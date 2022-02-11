@@ -155,7 +155,7 @@ module.exports = function(app, options) {
     },
   */
 
-  app.debug('schema: ' + JSON.stringify(schema))
+  // app.debug('schema: ' + JSON.stringify(schema))
     var stationsObj =  {
 	    type: 'string',
 	    title: 'Station',
@@ -177,7 +177,7 @@ module.exports = function(app, options) {
     stationsObj.enum = stationsEnum;
     stationsObj.enumNames = stationsEnumNames;
     schema.properties.stations.items.properties.station = stationsObj;
-    app.debug(JSON.stringify(stationsObj))
+    // app.debug(JSON.stringify(stationsObj))
 
     app.debug('schema: %j', schema);
 

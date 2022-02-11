@@ -13,6 +13,7 @@
   <script type='text/javascript' src='date.format.js'></script>
 </head>
 <body>
+  <div id="divfix"><a href="#" onclick="window.location.reload(true);"><img src ="refresh.png"/></a></div>
   <div id="data"/>
 </body>
 
@@ -41,6 +42,9 @@ const urlParams = new URLSearchParams(window.location.search);
 var dayNight = urlParams.get('mode');
 var mfd_name = urlParams.get('mfd_name');
 var messages=[];
+var connected=false;
+var ws;
+var wsNr = 0;
 
 const navigatorObject = window.navigator;
 /*
@@ -62,27 +66,41 @@ $(function() {
     */
 });
 
-var ws;
 
 function connect () {
+  if (connected || wsNr >= 1) {
+    return
+  };
   ws = new WebSocket((window.location.protocol === 'https:' ? 'wss' : 'ws') + "://" + window.location.host + "/signalk/v1/stream?subscribe=none");
 	ws.onopen = function() {
+    wsNr++;
 	  connected = true;
-	  console.log("WebSocket connected");
     setListeningStations();
 
     ws.onmessage = function(event) {
-      addContenttoDom(event.data);
+      if (event.data.includes('signalk-server')) {
+        welcomeMessage = event.data;
+        console.log("Skipping welcome message: " + welcomeMessage)
+      } else {
+        addContenttoDom(event.data);
+      }
       // dataDiv.innerHTML += JSON.stringify(JSON.parse(event.data), null, 2);
     }
 
 	  ws.onclose = function() {
 	    connected = false;
-	    console.log("WebSocket closed");
-      setTimeout(function() {
+      wsNr--;
+	    console.log("WebSocket closed - wsNr: " + wsNr);
+      setInterval(function() {
         connect();
-      }, 1000);
+      }, 60000);
 	  }
+
+	  ws.onerror = function(err) {
+	    console.log("WebSocket connection error: " + err.message + " - closing connection");
+      ws.close();
+	  }
+    
   }
 }
 
@@ -131,7 +149,7 @@ const addContenttoDom = newMessage => {
   newMessageEl.setAttribute("type", "type_" + messageType.toUpperCase());
   const newHeaderEl = document.createElement("header");
   newHeaderEl.setAttribute("id","header");
-  newHeaderEl.innerHTML= datetime + "  #" + messageNr + " Station: " + stationId + "<br>" + messageTypes[messageType];
+  newHeaderEl.innerHTML= datetime + "  #" + messageNr + " " + messageTypes[messageType].replace(' ', '&nbsp;');
   newMessageEl.appendChild(newHeaderEl);
   const newTextEl = document.createElement("text");
   newTextEl.setAttribute("id","text");
