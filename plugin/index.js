@@ -7,6 +7,8 @@ const _ = require("lodash")
 const Readline = require('@serialport/parser-readline');
 const url = require('url');
 
+let stationList = require('./stations.json');
+
 var NavTexMessages = []
 var SerialPort = require('serialport');
 var cleaner = require('deep-cleaner');
@@ -28,46 +30,168 @@ module.exports = function(app, options) {
   var client
   var plugin = {}
   plugin.id = "signalk-navtex-plugin"
+  plugin.name = "NavTex message reader and display"
+  plugin.description = "Signal K server plugin that reads NavTex messages from serial with a display"
 
   var unsubscribes = []
 
-  return {
-    id: "signalk-navtex-plugin",
-    name: "NavTex message reader and display",
-    description:
-    "Signal K server plugin that reads NavTex messages from serial with a display",
-    uiSchema: {
-      entered: {
-        items: {
-          csvTable: { "ui:widget": "textarea" }
-        }
-      }
-    },
-    schema: {
-      type: "object",
-      title:
-      "A Signal K (node) plugin to read and display NavTex messages",
-      description: "This plugin reads NavTex messages from a serial port and sends them to SignalK under /resources/navtex/.",
-      properties: {
-        tty: {
-          type: "string",
-          title: "Serial port to read NavTex input from",
-          default: "/dev/ttyS1"
-        },
-        baudrate: {
-          type: "number",
-          title: "Serial port baudrate",
-          default: 4800
-        },
-        expire: {
-          type: "number",
-          title: "Expire messages older than (hours)",
-          default: 48
-        },
+  var schema = {
+    type: "object",
+    title:
+    "A Signal K (node) plugin to read and display NavTex messages",
+    description: "This plugin reads NavTex messages from a serial port and sends them to SignalK under /resources/navtex/.",
+    properties: {
+      tty: {
+        type: "string",
+        title: "Serial port to read NavTex input from",
+        default: "/dev/ttyS1"
       },
-    },
+      baudrate: {
+        type: "number",
+        title: "Serial port baudrate",
+        default: 4800
+      },
+      expire: {
+        type: "number",
+        title: "Expire messages older than (hours)",
+        default: 48
+      },
+	    stations: {
+	      type: 'array',
+	      title: 'Select stations and message types',
+	      items: {
+	        type: 'object',
+	        properties: {
+	          station: {
+	            type: 'string',
+	            title: 'Station',
+	            default: 'ALL'
+	          },
+            messageTypes: {
+              type: 'object',
+			        title: 'Message types',
+			        properties: {
+			          0: {
+			            title: "All messages",
+			            type: 'boolean'
+			          },
+			          A: {
+			            title: "Navigational warning",
+			            type: 'boolean'
+			          },
+			          B: {
+			            title: "Meteorological warning",
+			            type: 'boolean'
+			          },
+			          C: {
+			            title: "Ice report",
+			            type: 'boolean'
+			          },
+			          D: {
+			            title: "Search and rescue information and pirate warning",
+			            type: 'boolean'
+			          },
+			          E: {
+			            title: "Meteorological forecast",
+			            type: 'boolean'
+			          },
+			          F: {
+			            title: "Pilot service message",
+			            type: 'boolean'
+			          },
+			          G: {
+			            title: "AIS, DECCA message",
+			            type: 'boolean'
+			          },
+			          H: {
+			            title: "LORAN message",
+			            type: 'boolean'
+			          },
+			          J: {
+			            title: "SATNAV message (GPS, GLONASS)",
+			            type: 'boolean'
+			          },
+			          K: {
+			            title: "Other electronic navaid system message",
+			            type: 'boolean'
+			          },
+			          L: {
+			            title: "Navigational warning (additional)",
+			            type: 'boolean'
+			          },
+			          V: {
+			            title: "Notice to fishermen (US only)",
+			            type: 'boolean'
+			          },
+			          W: {
+			            title: "Environmental (US only)",
+			            type: 'boolean'
+			          },
+			          Z: {
+			            title: "No message on hand",
+			            type: 'boolean'
+			          }
+			        }
+			      }
+			    }
+			  }
+      }
+    }
+  } 
 
-    start: function(options) {
+  function updateSchema() {
+  /*
+    {
+	   "NAVAREA": "I",
+	   "Broadcast frequency (kHz)": 518,
+	   "NAVTEX CRS name": "Svalbard",
+	   "NAVTEX CRS identifier": "A",
+	   "Country": "Norway",
+	   "Latitude": "78° 02' N",
+	   "Longitude": "13° 40' E",
+	   "Broadcast range (NM)": "450",
+	   "Transmission times (All in UTC)": "0000, 0400, 0800, 1200, 1600, 2000",
+	   "Broadcast language": "English"
+    },
+  */
+
+  app.debug('schema: ' + JSON.stringify(schema))
+    var stationsObj =  {
+	    type: 'string',
+	    title: 'Station',
+	    enum: [],
+	    enumNames: [],
+	    default: 'ALL'
+    }
+    var stationsEnum = ['ALL']
+    var stationsEnumNames = ['All']
+    Object.keys(stationList).forEach(key => {
+      var station = "NavArea " + stationList[key]['NAVAREA'] + " - " + stationList[key]['Broadcast frequency (kHz)'] + "kHz - " + stationList[key]['NAVTEX CRS name'] + " (" + stationList[key]['Country'] + " / " + stationList[key]['Broadcast language'] + ")"
+      var stationId = stationList[key]['NAVAREA']  + "-" + stationList[key]['Broadcast frequency (kHz)'] + "-" + stationList[key]['NAVTEX CRS identifier']
+      if (stationsEnum.includes(stationId)) {
+        stationId += "2"
+      }
+      stationsEnum.push(stationId)
+      stationsEnumNames.push(station)
+    });
+    stationsObj.enum = stationsEnum;
+    stationsObj.enumNames = stationsEnumNames;
+    schema.properties.stations.items.properties.station = stationsObj;
+    app.debug(JSON.stringify(stationsObj))
+
+    app.debug('schema: %j', schema);
+
+    // schema.properties.stations = obj;
+  }
+
+  updateSchema();
+
+  plugin.schema = function() {
+    updateSchema();
+    return schema
+  }
+
+    plugin.start = function(options, restartPlugin) {
       var text = [];
       app.debug('starting plugin')
       const messagesCacheFile = path.join(app.getDataDirPath(), 'messagesCacheFile.json')
@@ -79,6 +203,31 @@ module.exports = function(app, options) {
           period: 5000 // Every 5000ms
         }]
       };
+    
+      plugin.registerWithRouter = function(router) {
+	      // Will appear here; plugins/signalk-navtex-plugin/
+	      app.debug("registerWithRouter")
+	      router.get("/messages", (req, res) => {
+	        res.contentType("application/json")
+	        res.send(JSON.stringify(NavTexMessages))
+	      })
+	      router.get("/schema", (req, res) => {
+	        res.contentType("application/json")
+	        res.send(JSON.stringify(schema))
+	      })
+	      router.get("/options", (req, res) => {
+	        res.contentType("application/json")
+	        res.send(JSON.stringify(options))
+	      })
+	      router.get("/stations", (req, res) => {
+	        res.contentType("application/json")
+	        res.send(JSON.stringify(stationsEnabled()))
+	      })
+	      router.get("/back", (req, res) =>{
+	        app.debug("back")
+	        res.redirect('back')
+	      })
+	    }
 
       app.subscriptionmanager.subscribe(
         localSubscription,
@@ -106,7 +255,7 @@ module.exports = function(app, options) {
             NavTexMessages.push(value)
             sendDelta(value)
 		        msgid = value['id'];
-		        app.debug('Reading msgid ' + msgid);
+		        // app.debug('Reading msgid ' + msgid);
 		        count++;
 		      }
 		    }
@@ -137,7 +286,7 @@ module.exports = function(app, options) {
       setInterval(removeOld, 60*60*1000); // every hour remove older messages
 
 			function pushDelta(app, path, value) {
-        app.debug("sendDelta: " + path + ": " + JSON.stringify(value))
+        // app.debug("sendDelta: " + path + ": " + JSON.stringify(value))
 			  app.handleMessage(plugin.id, {
 			    updates: [
 			      {
@@ -256,25 +405,31 @@ module.exports = function(app, options) {
           })
 			}
 
-    },
+      function stationsEnabled () {
+        /*
+        */
+        app.debug(JSON.stringify(options.stations));
+        var stations = [];
+        for (const [id, stationObj] of Object.entries(options.stations)) {
+          var sId = stationObj['station'].split('-')[2]
+          stationObj.messageTypes
+          for (const [key, value] of Object.entries(stationObj.messageTypes)) {
+            if (value == true) {
+              if (key == '0') {
+                stations.push(sId + ".*")
+              } else {
+                stations.push(sId + "." + key)
+              }
+            }
+          }
+        }
+        return stations;
+      }
 
-    registerWithRouter: function(router) {
-      // Will appear here; plugins/signalk-navtex-plugin/
-      app.debug("registerWithRouter")
+    }
 
-      router.get("/messages", (req, res) => {
-        res.contentType("application/json")
-        res.send(JSON.stringify(NavTexMessages))
-      })
 
-      router.get("/back", (req, res) =>{
-        app.debug("back")
-        res.redirect('back')
-      })
-
-    },
-
-    stop: function() {
+    plugin.stop = function() {
       app.debug("Stopping")
       unsubscribes.forEach(f => f())
       // keyPaths.length = keyPaths.length - 1
@@ -284,9 +439,9 @@ module.exports = function(app, options) {
       // app.signalk.removeListener("delta", handleDelta)
       app.debug("Stopped")
     }
-  }
-}
 
+  return plugin;
+};
 module.exports.app = "app"
 module.exports.options = "options"
 

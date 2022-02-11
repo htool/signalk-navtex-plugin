@@ -37,50 +37,91 @@ let messageTypes = {
 
 var dataDiv = document.getElementById('data');
 
-function connect () {
-	var ws = new WebSocket((window.location.protocol === 'https:' ? 'wss' : 'ws') + "://" + window.location.host + "/signalk/v1/stream?subscribe=none");
-	
-	ws.onopen = function() {
-	  console.log("WebSocket connected");
-	  connected = true;
-	  var subscriptionObject = {
-	    "context": "vessels.self",
-	    "subscribe": [
-	      {
-	        "path": "resources.navtex.*",
-	        "format": "delta"
-	      }
-	    ]
-	  }
-	  var subscriptionMessage = JSON.stringify(subscriptionObject);
-	  ws.send(subscriptionMessage);
-	}
-	
-	ws.onclose = function() {
-	  connected = false;
-	  console.log("WebSocket closed");
-    setTimeout(function() {
-      connect();
-    }, 1000);
-	}
+const urlParams = new URLSearchParams(window.location.search);
+var dayNight = urlParams.get('mode');
+var mfd_name = urlParams.get('mfd_name');
+var messages=[];
 
-  ws.onmessage = function(event) {
-    addContenttoDom(event.data);
-    // dataDiv.innerHTML += JSON.stringify(JSON.parse(event.data), null, 2);
+const navigatorObject = window.navigator;
+/*
+for(let i in navigator){
+  document.write(i + ': ' + navigatorObject[i] + '<br>');
+}
+*/
+
+$(function() {
+    $(window).focus(function() {
+      if (mfd_name != null) {
+        location.reload();
+      }
+    });
+    /*
+    $(window).blur(function() {
+        console.log('Blur');
+    });
+    */
+});
+
+var ws;
+
+function connect () {
+  ws = new WebSocket((window.location.protocol === 'https:' ? 'wss' : 'ws') + "://" + window.location.host + "/signalk/v1/stream?subscribe=none");
+	ws.onopen = function() {
+	  connected = true;
+	  console.log("WebSocket connected");
+    setListeningStations();
+
+    ws.onmessage = function(event) {
+      addContenttoDom(event.data);
+      // dataDiv.innerHTML += JSON.stringify(JSON.parse(event.data), null, 2);
+    }
+
+	  ws.onclose = function() {
+	    connected = false;
+	    console.log("WebSocket closed");
+      setTimeout(function() {
+        connect();
+      }, 1000);
+	  }
   }
 }
 
+// setInterval(setListeningStations(), 5000);
+
 connect();
+
+function setListeningStations () {
+  var paths = [];
+  // Get stations list to listen to
+  $.getJSON("/plugins/signalk-navtex-plugin/stations", function(json) {
+    json.forEach(function(station) {
+      paths.push({"path": "resources.navtex." + station})
+    });
+    var subscriptionObject = {
+      "context": "vessels.self",
+      "subscribe": paths
+    }
+    var subscriptionMessage = JSON.stringify(subscriptionObject);
+    console.log("subscriptionMessage: " + subscriptionMessage);
+    ws.send(subscriptionMessage);
+  });
+}
 
 let options = { timeStyle: 'short', hour12: false, dateStyle: 'medium' };
 
 const addContenttoDom = newMessage => {
+  //console.log("New message: " + newMessage)
   const obj = JSON.parse(newMessage);
   const message = obj.updates[0].values[0];
   const stationId = message.path.split('.')[2];
   const messageType = message.path.split('.')[3];
   const messageNr = message.path.split('.')[4];
   const epoch = message.value.epoch;
+  if (messages.includes(epoch)) {
+    // console.log('Ignore duplicate ' + epoch)
+    return
+  }
+  messages.push(epoch);
   const dateString = new Date(epoch);
   const datetime = dateString.format("HH:MM ddd mmm d");
 
@@ -100,6 +141,7 @@ const addContenttoDom = newMessage => {
     line.innerHTML = message.value.text[i];
     newTextEl.appendChild(line);
   }
+  newMessageEl.style.display = "none";
   newMessageEl.appendChild(newTextEl);
   var list = $("message");
   var j = list.length;
@@ -116,7 +158,10 @@ const addContenttoDom = newMessage => {
 	    document.body.appendChild(newMessageEl);
     }
   }
-  fadeIn(newMessageEl);
+
+  $("message[epoch="+epoch+"]").slideDown("slow");
+
+  // fadeIn(newMessageEl);
 }
 
 function fadeIn(element) {
@@ -128,7 +173,7 @@ function fadeIn(element) {
         }
         element.style.opacity = op;
         element.style.filter = 'alpha(opacity=' + op * 100 + ")";
-        op += op * 0.02;
+        op += op + 0.5;
     }, 10);
 }
 
