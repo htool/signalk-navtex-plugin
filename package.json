@@ -10,8 +10,7 @@
   },
   "main": "plugin/index.js",
   "name": "signalk-navtex-plugin",
-  "readme": "ERROR: No README data found!",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/htool/signalk-navtex-plugin.git"

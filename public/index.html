@@ -10,10 +10,10 @@
   <title>Signal K NavTex reader</title>
   <script>document.write('<link rel="stylesheet" href="style.css?ver=' + Math.floor(Math.random() * 1000) + '">');</script>
   <script type='text/javascript' src='/jquery/dist/jquery.min.js'></script>
+  <script type='text/javascript' src='jquery.detect_swipe.js'></script>
   <script type='text/javascript' src='date.format.js'></script>
 </head>
 <body>
-  <div id="divfix"><a href="#" onclick="window.location.reload(true);"><img src ="refresh.png"/></a></div>
   <div id="data"/>
 </body>
 
@@ -39,10 +39,22 @@ let messageTypes = {
 var dataDiv = document.getElementById('data');
 
 const urlParams = new URLSearchParams(window.location.search);
+
+// Set day or night mode
 var dayNight = urlParams.get('mode');
+
 var mfd_name = urlParams.get('mfd_name');
+var mfd_model_detail = urlParams.get('mfd_model_detail');
+
+// Give MFD a fresh button
+if (mfd_model_detail != null) {
+  // console.log('mfd_model_detail=' + mfd_model_detail + ' - including refresh button');
+  document.write('<div id="divfix"><a href="#" onclick="window.location.reload(true);"><img src ="refresh.png"/></a></div>');
+}
+
 var messages=[];
 var connected=false;
+var instantReconnect = false;
 var ws;
 var wsNr = 0;
 
@@ -55,16 +67,21 @@ for(let i in navigator){
 
 $(function() {
     $(window).focus(function() {
+      console.log('Focus');
       if (mfd_name != null) {
         location.reload();
       }
+      instantReconnect = true;
+      ws.close();
     });
-    /*
     $(window).blur(function() {
         console.log('Blur');
     });
-    */
 });
+
+$(".selector").on('swiperight',  function() {
+  console.log('Moved to right');
+})
 
 
 function connect () {
@@ -91,9 +108,14 @@ function connect () {
 	    connected = false;
       wsNr--;
 	    console.log("WebSocket closed - wsNr: " + wsNr);
-      setInterval(function() {
+      if (instantReconnect) {
+        instantReconnect = false;
         connect();
-      }, 60000);
+      } else {
+        setInterval(function() {
+          connect();
+        }, 60000);
+      }
 	  }
 
 	  ws.onerror = function(err) {
@@ -107,6 +129,14 @@ function connect () {
 // setInterval(setListeningStations(), 5000);
 
 connect();
+
+function slideUp(epoch) {
+  console.log('SlideUp() epoch ' + epoch);
+  $("message[epoch="+epoch+"]").slideUp("slow").promise().done(function() {
+    console.log('Removing element');
+    $(this).remove();
+  });
+}
 
 function setListeningStations () {
   var paths = [];
@@ -144,9 +174,10 @@ const addContenttoDom = newMessage => {
   const datetime = dateString.format("HH:MM ddd mmm d");
 
   const newMessageEl = document.createElement("message");
+  newMessageEl.innerHTML = '<div id="close"><a href="#" onclick="slideUp(' + epoch + '); $(this).parent().hide(); return false;"><img src ="x.png"/></a></div>';
   newMessageEl.setAttribute("epoch", epoch);
   newMessageEl.setAttribute("id","message");
-  newMessageEl.setAttribute("type", "type_" + messageType.toUpperCase());
+  newMessageEl.setAttribute("class", "type_" + messageType.toUpperCase() + " " + dayNight);
   const newHeaderEl = document.createElement("header");
   newHeaderEl.setAttribute("id","header");
   newHeaderEl.innerHTML= datetime + "  #" + messageNr + " " + messageTypes[messageType].replace(' ', '&nbsp;');

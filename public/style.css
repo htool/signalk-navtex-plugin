@@ -5,6 +5,7 @@
     src: local('Consolas'), url('Consolas.woff') format('woff');
 }
 
+
 body {
   background-color: black;
   color: white;
@@ -12,19 +13,23 @@ body {
   font-size: normal;
   margin-left: 2px;
   margin-right: 2px;
- }
-
-.dark-mode {
-  color: grey;
+  overflow-anchor: none;
 }
 
 #divfix {
-  top: 10;
+  bottom: 10;
   right: 10;
   font-family: Lucida Sans Unicode;
   font-size: 160%;
   opacity: 0.4;
   position: fixed;
+}
+
+#close img {
+    position: absolute;
+    right: 14px;
+    margin-top: 2px;
+    opacity: 0.6;
 }
 
 #message {
@@ -42,42 +47,62 @@ body {
   display: block;
 }
 
-.dark-mode {
-  color: grey;
-}
-
 #header {
   margin-bottom: 8px;
 }
 
-/* dark red */
-[type=type_A],[type=type_L],[type=type_D] {
+/* red */
+.type_A,.type_L,.type_D {
+  background-color: #990000 ;
+}
+.type_A.night, .type_L.night, .type_D.night {
   background-color: #660000 ;
+  color: #999999;
 }
 
 /* orange */
-[type=type_B] {
-   background: #7D3300;
+.type_B {
+  background: #9D5500;
+}
+.type_B.night {
+  background: #5D2300;
+  color: #999999;
 }
 
 /* green */
-[type=type_F],[type=type_V] {
-   background: #003300;
+.type_F,.type_V {
+   background: #006600;
 }
-
-/* light blue */
-[type=type_E] {
-   background: #002255;
+.type_F.night, .type_V.night {
+  background: #003300;
+  color: #999999;
 }
 
 /* blue */
-[type=type_C] {
-   background: #AED6F1;
+.type_E {
+   background: #004295;
+}
+.type_E.night {
+  background: #002255;
+  color: #999999;
+}
+
+/* blue */
+.type_C {
+  background: #CEF6F1;
+}
+.type_C.night {
+  background: #AED6F1;
+  color: #999999;
 }
 
 /* yellow */
-[type=type_G],[type=type_H],[type=type_J],[type=type_K],[type=type_W],[type=type_Z] {
-   background: #999900;
+.type_G, .type_H, .type_J, .type_K, .type_W, .type_Z {
+  background: #999900;
+}
+.type_G.night, .type_H.night, .type_J.night, .type_K.night, .type_W.night, .type_Z.night {
+  background: #666600;
+  color: #999999;
 }
 
 .button {
