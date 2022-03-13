@@ -1,6 +1,0 @@
-# NavTex reader for SignalK
-
- - Expects a NavTex feed on a serial port.
- - Supports station and per station message type selection
- - Supports day/night mode
- - Supports removing messages from view
