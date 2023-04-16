@@ -173,7 +173,7 @@ const addContenttoDom = newMessage => {
   const datetime = dateString.format("HH:MM ddd mmm d");
 
   const newMessageEl = document.createElement("message");
-  newMessageEl.innerHTML = '<div id="close"><a href="#" onclick="slideUp(' + epoch + '); $(this).parent().hide(); return false;"><img src ="x.png"/></a></div>';
+  newMessageEl.innerHTML = '<div id="close"><a href="#" onclick="slideUp(' + epoch + '); $(this).parent().hide(); return false;"><img src ="x_big.png"/></a></div>';
   newMessageEl.setAttribute("epoch", epoch);
   newMessageEl.setAttribute("id","message");
   newMessageEl.setAttribute("class", "type_" + messageType.toUpperCase() + " " + dayNight);
