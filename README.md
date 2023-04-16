@@ -7,3 +7,7 @@ The plugin expects a NavTex feed on a serial port, which can be configured in th
  - Station and per station message type selection through plugin config
  - Day/night mode
  - Temp removing messages from view
+
+![](doc/navtex_1.png)
+![](doc/navtex_2.png)
+
