@@ -10,7 +10,7 @@
   },
   "main": "plugin/index.js",
   "name": "signalk-navtex-plugin",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/htool/signalk-navtex-plugin.git"
@@ -21,6 +21,10 @@
     "url": "https://github.com/htool/signalk-navtex-plugin/issues"
   },
   "homepage": "https://github.com/htool/signalk-navtex-plugin#readme",
+  "signalk": {
+    "appIcon": "./signalk-logo.png",
+    "displayName": "NavTex reader"
+  },
   "dependencies": {
     "dateformat": "^5.0.2",
     "deep-cleaner": "^1.2.1",
