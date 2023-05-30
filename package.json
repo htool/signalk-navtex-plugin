@@ -10,7 +10,7 @@
   },
   "main": "plugin/index.js",
   "name": "signalk-navtex-plugin",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/htool/signalk-navtex-plugin.git"
