@@ -4,13 +4,13 @@
 
 const util = require("util")
 const _ = require("lodash")
-const Readline = require('@serialport/parser-readline');
 const url = require('url');
+const { SerialPort } = require('serialport')
+const { ReadlineParser } = require('@serialport/parser-readline')
 
 let stationList = require('./stations.json');
 
 var NavTexMessages = []
-var SerialPort = require('serialport');
 var cleaner = require('deep-cleaner');
 var qs = require('querystring');
 var dateTime = require('node-datetime');
@@ -270,13 +270,14 @@ module.exports = function(app, options) {
 
       // Setup TTY reader
       app.debug('Using TTY ' + options.tty + ' at ' + options.baudrate + ' baud')
-      var tty = new SerialPort(options.tty, {
+      const tty = new SerialPort({
+        path: options.tty,
         baudRate: options.baudrate,
         dataBits: 8,
         stopBits: 1,
         parity: 'none'
       });
-      const parser = tty.pipe(new Readline({ delimiter: '\r' }))
+      const parser = tty.pipe(new ReadlineParser({ delimiter: '\r\n' }))
       parser.on('data', function (data) {
         data = data.toString().trim();
         processLine(data);
