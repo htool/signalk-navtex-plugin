@@ -277,6 +277,14 @@ module.exports = function(app, options) {
         stopBits: 1,
         parity: 'none'
       });
+      // Try to retrieve stored messages on NASA NavTex
+      app.debug('Writing $S to retrieve NASA NavTex stored messages')
+      tty.write('$S\n', function(err) {
+        if (err) {
+          return app.debug('Error writing $S', err.message)
+        }
+      })
+
       const parser = tty.pipe(new ReadlineParser({ delimiter: '\r\n' }))
       parser.on('data', function (data) {
         data = data.toString().trim();
