@@ -327,6 +327,11 @@ module.exports = function(app, options) {
 			  switch(nextline) {
 			    case 'header':
 			      app.debug('header: Seeing new ZCZC');
+            let offset = 5
+            if (nextline.match(/^>/)) {
+			        app.debug('Seeing NASA style new message header >')
+              offset = 1
+            }
 			      message.id = msgid;
 			      message.epoch = Date.now();
 			      // var dt = dateTime.create();
@@ -334,9 +339,9 @@ module.exports = function(app, options) {
 			      // var formatted = dt.format('HhM n d');
 			      // var dateString = new String(formatted);
 			      // message.datetime = dateString.split("(")[0];
-			      message.stationId = line.slice(5,6);
-			      message.msgtype = line.slice(6,7);
-			      message.msgtypenr = line.slice(7);
+			      message.stationId = line.slice(offset,offset+1);
+			      message.msgtype = line.slice(offset+1,offset+2);
+			      message.msgtypenr = line.slice(offset+2);
 			      // debug('Message: ', JSON.stringify(message))
 			      nextline = 'text';
 			      break;
@@ -420,14 +425,19 @@ module.exports = function(app, options) {
         app.debug(JSON.stringify(options.stations));
         var stations = [];
         for (const [id, stationObj] of Object.entries(options.stations)) {
-          var sId = stationObj['station'].split('-')[2]
-          stationObj.messageTypes
-          for (const [key, value] of Object.entries(stationObj.messageTypes)) {
-            if (value == true) {
-              if (key == '0') {
-                stations.push(sId + ".*")
-              } else {
-                stations.push(sId + "." + key)
+          app.debug('stationsEnabled: %j', stationObj)
+          if (stationObj.station == 'ALL') {
+            stations.push("*.*")
+          } else {
+            var sId = stationObj['station'].split('-')[2]
+            stationObj.messageTypes
+            for (const [key, value] of Object.entries(stationObj.messageTypes)) {
+              if (value == true) {
+                if (key == '0') {
+                  stations.push(sId + ".*")
+                } else {
+                  stations.push(sId + "." + key)
+                }
               }
             }
           }
