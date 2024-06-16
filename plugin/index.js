@@ -279,7 +279,7 @@ module.exports = function(app, options) {
       });
       // Try to retrieve stored messages on NASA NavTex
       app.debug('Writing $S to retrieve NASA NavTex stored messages')
-      tty.write('$S\n', function(err) {
+      tty.write('$S\r\n', function(err) {
         if (err) {
           return app.debug('Error writing $S', err.message)
         }
@@ -312,14 +312,14 @@ module.exports = function(app, options) {
 			}
 			
 			function processLine(line) {
-			  if (line.match(/^ZCZC/i)) {
+			  if (line.match(/^ZCZC/i) || line.match(/^>/i)) {
 			    if (nextline == 'text') {
 			      app.debug ('Missed footer apparently');
 			      processFooter();
 			    }
 			    nextline = 'header';
 			  } else {
-			    if (line.match(/^NNNN/i)) {
+			    if (line.match(/^NNNN/i) || line.match(/^</i) {
 			      nextline = 'footer';
 			    }
 			  }
@@ -328,7 +328,7 @@ module.exports = function(app, options) {
 			    case 'header':
 			      app.debug('header: Seeing new ZCZC');
             let offset = 5
-            if (nextline.match(/^>/)) {
+            if (line.match(/^>/i)) {
 			        app.debug('Seeing NASA style new message header >')
               offset = 1
             }
