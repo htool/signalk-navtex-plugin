@@ -56,6 +56,11 @@ module.exports = function(app, options) {
         title: "Expire messages older than (hours)",
         default: 48
       },
+      nasaStore: {
+        type: "boolean",
+        title: "Use message store in NASA NavTex",
+        default: false
+      },
 	    stations: {
 	      type: 'array',
 	      title: 'Select stations and message types',
@@ -277,13 +282,16 @@ module.exports = function(app, options) {
         stopBits: 1,
         parity: 'none'
       });
-      // Try to retrieve stored messages on NASA NavTex
-      app.debug('Writing $S to retrieve NASA NavTex stored messages')
-      tty.write('$S\r\n', function(err) {
-        if (err) {
-          return app.debug('Error writing $S', err.message)
-        }
-      })
+
+      if (options.nasaStore == true) {
+        // Try to retrieve stored messages on NASA NavTex
+        app.debug('Writing $S to retrieve NASA NavTex stored messages')
+        tty.write('$S\r\n', function(err) {
+          if (err) {
+            return app.debug('Error writing $S', err.message)
+          }
+        })
+      }
 
       const parser = tty.pipe(new ReadlineParser({ delimiter: '\r\n' }))
       parser.on('data', function (data) {
@@ -319,7 +327,7 @@ module.exports = function(app, options) {
 			    }
 			    nextline = 'header';
 			  } else {
-			    if (line.match(/^NNNN/i) || line.match(/^</i) {
+			    if (line.match(/^NNNN/i) || line.match(/^</i)) {
 			      nextline = 'footer';
 			    }
 			  }
@@ -365,7 +373,9 @@ module.exports = function(app, options) {
 			    messages.push(message);
 			    sendDelta(message)
 			    app.debug('footer: Added message id ' + msgid);
-			    cacheMessages(messages, messagesCacheFile);
+          if (options.nasaStore == false) {
+			      cacheMessages(messages, messagesCacheFile);
+          }
 			    text = [];
 			    message = {};
 			    msgid++;
@@ -406,7 +416,9 @@ module.exports = function(app, options) {
 		    }
 		    msgid = count;
 		    // app.debug(messages_tmp);
-		    cacheMessages(messages_tmp, messagesCacheFile);
+        if (options.nasaStore == false) {
+		      cacheMessages(messages_tmp, messagesCacheFile);
+        }
 			  messages = JSON.parse(JSON.stringify(messages_tmp));
 			}
 

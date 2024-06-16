@@ -15,7 +15,7 @@ NASA uses > and < as header and footer. This is supported as well.
  - Station and per station message type selection through plugin config
  - Day/night mode
  - Temp removing messages from view
- - Read NASA NavTex stored messages using the $S command
+ - Option to use NASA NavTex stored messages
 
 
 ![](doc/navtex_1.png)
