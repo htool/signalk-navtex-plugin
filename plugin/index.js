@@ -423,11 +423,20 @@ module.exports = function(app, options) {
 			}
 
 			function sendDelta(message) {
+        const sid = String(message.stationId || '').trim().toUpperCase();
+        const mt = String(message.msgtype || '').trim().toUpperCase();
+        const mnr = String(message.msgtypenr || '').trim();
+        // Only publish valid NAVTEX ids (station A-Z, type A-Z, serial 2 digits).
+        // Garbled headers otherwise become multiline paths and break the Data Browser.
+        if (!/^[A-Z]$/.test(sid) || !/^[A-Z]$/.test(mt) || !/^[0-9]{2}$/.test(mnr)) {
+          app.debug('Skipping garbled message id: ' + JSON.stringify((sid + mt + mnr).slice(0, 24)));
+          return;
+        }
         pushDelta(app,
-          "resources.navtex." + message.stationId + "." + message.msgtype + "." + message.msgtypenr,
-          { 
-            "epoch": message.epoch,
-            "text": message.text
+          'resources.navtex.' + sid + '.' + mt + '.' + mnr,
+          {
+            epoch: message.epoch,
+            text: message.text
           })
 			}
 

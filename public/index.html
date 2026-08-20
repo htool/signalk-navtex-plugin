@@ -9,7 +9,7 @@
   <META name="navico-store" content="mfd-insight-store">
   <title>Signal K NavTex reader</title>
   <script>document.write('<link rel="stylesheet" href="style.css?ver=' + Math.floor(Math.random() * 1000) + '">');</script>
-  <script type='text/javascript' src='/jquery/dist/jquery.min.js'></script>
+  <script type='text/javascript' src='jquery.min.js'></script>
   <script type='text/javascript' src='date.format.js'></script>
 </head>
 <body>
@@ -140,21 +140,32 @@ function slideUp(epoch) {
   });
 }
 
+function subscribeToNavtex (paths) {
+  var subscriptionObject = {
+    "context": "vessels.self",
+    "subscribe": paths
+  }
+  var subscriptionMessage = JSON.stringify(subscriptionObject);
+  console.log("subscriptionMessage: " + subscriptionMessage);
+  ws.send(subscriptionMessage);
+}
+
 function setListeningStations () {
-  var paths = [];
-  // Get stations list to listen to
-  $.getJSON("/plugins/signalk-navtex-plugin/stations", function(json) {
-    json.forEach(function(station) {
-      paths.push({"path": "resources.navtex." + station})
+  // Get stations list to listen to. Trailing .* is required on Signal K 2.x
+  // so subscriptions match resources.navtex.<station>.<type>.<nr>.
+  $.getJSON("/plugins/signalk-navtex-plugin/stations")
+    .done(function(json) {
+      var paths = [];
+      json.forEach(function(station) {
+        paths.push({"path": "resources.navtex." + station + ".*"})
+      });
+      subscribeToNavtex(paths);
+    })
+    .fail(function() {
+      // /stations requires login even with allowReadonly; fall back to all
+      // navtex deltas so the reader still works without authenticating.
+      subscribeToNavtex([{"path": "resources.navtex.*"}]);
     });
-    var subscriptionObject = {
-      "context": "vessels.self",
-      "subscribe": paths
-    }
-    var subscriptionMessage = JSON.stringify(subscriptionObject);
-    console.log("subscriptionMessage: " + subscriptionMessage);
-    ws.send(subscriptionMessage);
-  });
 }
 
 let options = { timeStyle: 'short', hour12: false, dateStyle: 'medium' };
@@ -162,10 +173,17 @@ let options = { timeStyle: 'short', hour12: false, dateStyle: 'medium' };
 const addContenttoDom = newMessage => {
   //console.log("New message: " + newMessage)
   const obj = JSON.parse(newMessage);
+  if (!obj.updates || !obj.updates[0] || !obj.updates[0].values || !obj.updates[0].values[0]) {
+    return;
+  }
   const message = obj.updates[0].values[0];
-  const stationId = message.path.split('.')[2];
-  const messageType = message.path.split('.')[3];
-  const messageNr = message.path.split('.')[4];
+  const pathParts = (message.path || '').split('.');
+  const stationId = pathParts[2];
+  const messageType = (pathParts[3] || '').toUpperCase();
+  const messageNr = pathParts[4];
+  if (!message.value || !Array.isArray(message.value.text) || !stationId || !messageType || !messageNr) {
+    return;
+  }
   const epoch = message.value.epoch;
   if (messages.includes(epoch)) {
     // console.log('Ignore duplicate ' + epoch)
@@ -182,7 +200,8 @@ const addContenttoDom = newMessage => {
   newMessageEl.setAttribute("class", "type_" + messageType.toUpperCase() + " " + dayNight);
   const newHeaderEl = document.createElement("header");
   newHeaderEl.setAttribute("id","header");
-  newHeaderEl.innerHTML= datetime + "  #" + messageNr + " " + messageTypes[messageType].replace(' ', '&nbsp;');
+  const typeLabel = (messageTypes[messageType] || messageType || 'Unknown').replace(/ /g, '&nbsp;');
+  newHeaderEl.innerHTML= datetime + "  #" + messageNr + " " + typeLabel;
   newMessageEl.appendChild(newHeaderEl);
   const newTextEl = document.createElement("text");
   newTextEl.setAttribute("id","text");
