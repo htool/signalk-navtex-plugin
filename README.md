@@ -17,6 +17,14 @@ NASA uses > and < as header and footer. This is supported as well.
  - Temp removing messages from view
  - Option to use NASA NavTex stored messages
 
+On Signal K 2.x, `/plugins/signalk-navtex-plugin/...` is admin-only. The MFD webapp reads the station list from the readonly API (`allow_readonly`):
+
+```
+GET /signalk/v1/api/signalk-navtex-plugin/stations
+GET /signalk/v1/api/signalk-navtex-plugin/messages
+GET /signalk/v1/api/signalk-navtex-plugin/options
+```
+
 
 ![](doc/navtex_1.png)
 ![](doc/navtex_2.png)
