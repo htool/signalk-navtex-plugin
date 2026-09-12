@@ -1,0 +1,104 @@
+# Patch-bump and npm publish at most once per UTC day when plugin/ or public/
+# changed since the last release. Trusted Publishing (OIDC); no NPM_TOKEN.
+#
+# Keep this filename: npm trusted publishing is bound to release.yml.
+#
+# One-time setup (package owner, with 2FA):
+#   npmjs.com → Package → Settings → Trusted Publisher → GitHub Actions
+#     Organization or user: htool
+#     Repository:           signalk-navtex-plugin
+#     Workflow filename:    release.yml
+#     Environment:          (leave blank)
+#     Allowed action:       npm publish
+# Docs: https://docs.npmjs.com/trusted-publishers/
+
+name: Release
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Publish even if plugin/public are unchanged (also bypasses the once-a-day cap)
+        type: boolean
+        default: false
+  push:
+    branches:
+      - master
+    paths:
+      - 'plugin/**'
+      - 'public/**'
+      - 'scripts/**'
+      - '.github/workflows/release.yml'
+      - 'package.json'
+      - 'package-lock.json'
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: npm-publish-signalk-navtex-plugin
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Ensure npm CLI supports trusted publishing
+        run: npm install -g npm@latest
+
+      - name: Remove setup-node auth token placeholder
+        run: |
+          NPMRC_PATH="${NPM_CONFIG_USERCONFIG:-$HOME/.npmrc}"
+          if [ -f "$NPMRC_PATH" ]; then
+            sed -i '/_authToken/d' "$NPMRC_PATH"
+          fi
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+      - name: Decide whether to publish
+        id: decide
+        env:
+          FORCE_PUBLISH: ${{ github.event.inputs.force }}
+          NODE_AUTH_TOKEN: ''
+        run: node scripts/npm-publish-check.js --github-output
+
+      - name: Skip
+        if: steps.decide.outputs.should_publish != 'true'
+        run: echo "${{ steps.decide.outputs.reason }}"
+
+      - name: Test publish decision
+        if: steps.decide.outputs.should_publish == 'true'
+        run: node scripts/test-npm-publish-check.js
+
+
+
+      - name: Bump package version
+        if: steps.decide.outputs.should_publish == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          npm version "${{ steps.decide.outputs.next_version }}" -m "Release %s"
+
+      - name: Publish to npm with OIDC
+        if: steps.decide.outputs.should_publish == 'true'
+        run: npm publish --access public
+
+      - name: Push version bump and tag
+        if: steps.decide.outputs.should_publish == 'true'
+        run: |
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}" --follow-tags

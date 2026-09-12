@@ -153,7 +153,8 @@ function subscribeToNavtex (paths) {
 function setListeningStations () {
   // Get stations list to listen to. Trailing .* is required on Signal K 2.x
   // so subscriptions match resources.navtex.<station>.<type>.<nr>.
-  $.getJSON("/plugins/signalk-navtex-plugin/stations")
+  // Readonly SK 2.x API (allow_readonly); /plugins/.../stations is admin-only.
+  $.getJSON("/signalk/v1/api/signalk-navtex-plugin/stations")
     .done(function(json) {
       var paths = [];
       json.forEach(function(station) {
@@ -162,8 +163,6 @@ function setListeningStations () {
       subscribeToNavtex(paths);
     })
     .fail(function() {
-      // /stations requires login even with allowReadonly; fall back to all
-      // navtex deltas so the reader still works without authenticating.
       subscribeToNavtex([{"path": "resources.navtex.*"}]);
     });
 }

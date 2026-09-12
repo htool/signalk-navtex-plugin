@@ -209,30 +209,44 @@ module.exports = function(app, options) {
         }]
       };
     
+      function sendJson(res, data) {
+        res.contentType("application/json")
+        res.send(JSON.stringify(data))
+      }
+      function handleMessages(req, res) {
+        sendJson(res, NavTexMessages)
+      }
+      function handleSchema(req, res) {
+        sendJson(res, schema)
+      }
+      function handleOptions(req, res) {
+        sendJson(res, options)
+      }
+      function handleStations(req, res) {
+        sendJson(res, stationsEnabled())
+      }
+
       plugin.registerWithRouter = function(router) {
 	      // Will appear here; plugins/signalk-navtex-plugin/
 	      app.debug("registerWithRouter")
-	      router.get("/messages", (req, res) => {
-	        res.contentType("application/json")
-	        res.send(JSON.stringify(NavTexMessages))
-	      })
-	      router.get("/schema", (req, res) => {
-	        res.contentType("application/json")
-	        res.send(JSON.stringify(schema))
-	      })
-	      router.get("/options", (req, res) => {
-	        res.contentType("application/json")
-	        res.send(JSON.stringify(options))
-	      })
-	      router.get("/stations", (req, res) => {
-	        res.contentType("application/json")
-	        res.send(JSON.stringify(stationsEnabled()))
-	      })
+	      router.get("/messages", handleMessages)
+	      router.get("/schema", handleSchema)
+	      router.get("/options", handleOptions)
+	      router.get("/stations", handleStations)
 	      router.get("/back", (req, res) =>{
 	        app.debug("back")
 	        res.redirect('back')
 	      })
 	    }
+
+      // SK 2.x /plugins is admin-only. MFD/readonly clients use /signalk/v1/api.
+      plugin.signalKApiRoutes = function(router) {
+        router.get("/signalk-navtex-plugin/messages", handleMessages)
+        router.get("/signalk-navtex-plugin/schema", handleSchema)
+        router.get("/signalk-navtex-plugin/options", handleOptions)
+        router.get("/signalk-navtex-plugin/stations", handleStations)
+        return router
+      }
 
       app.subscriptionmanager.subscribe(
         localSubscription,
